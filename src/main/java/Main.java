@@ -114,6 +114,7 @@ public class Main {
         String template = "%-20s %10s %9s%n";
         System.out.printf(titleTemplate, "|url", "|page views", "|visitors|");
 
+
         for (Map.Entry<String, List<String>> entry :
                 trackingResultsPageViews.entrySet()) {
             int pageViews = entry.getValue().size();
