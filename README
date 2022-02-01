@@ -1,0 +1,12 @@
+Description
+
+This is a command-line application, which takes user input as date range and displays
+the amount of page views and visitors for each URL. The application is written in java.
+
+Build
+
+Gradle was used for the build of this project.
+
+
+
+
