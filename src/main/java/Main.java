@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+
 
 
 public class Main {
@@ -33,6 +35,7 @@ public class Main {
             try {
                 DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
                 dateTimeStart = LocalDateTime.parse(startDtTm, dateTimeFormat);
+
                 retry = false;
             } catch (DateTimeParseException e) {
                 e.printStackTrace();
@@ -50,6 +53,7 @@ public class Main {
             try {
                 DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
                 dateTimeEnd = LocalDateTime.parse(endDtTm, dateTimeFormat);
+
                 if (dateTimeEnd.isBefore(dateTimeStart)) {
 
                     System.out.println("End date cannot be before start date, please enter a valid end date");
@@ -87,7 +91,7 @@ public class Main {
                 DateTimeFormatter dateTimeFormatParsed = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
                 dateTimeParsed = LocalDateTime.parse(dateTimePart, dateTimeFormatParsed);
 
-                if (dateTimeStart.isBefore(dateTimeParsed) && dateTimeEnd.isAfter(dateTimeParsed)) {
+                if (dateTimeStart.truncatedTo(ChronoUnit.MINUTES).isBefore(dateTimeParsed) && dateTimeEnd.truncatedTo(ChronoUnit.MINUTES).isAfter(dateTimeParsed)) {
 
                     List<String> checkListWithUrl;
                     checkListWithUrl = trackingResultsPageViews.get(urlPart);
@@ -115,14 +119,16 @@ public class Main {
 
         System.out.println("pageviews: " + trackingResultsPageViews);
 
-        // String titleTemplate = "%-10s %10s %9s%n";
-        // String template = "%-10s %10s %9s%n";
-        System.out.println("|url" + "\t" + "|page views" + "\t" + "|visitors|");
+        String titleTemplate = "%-20s %10s %9s%n";
+        String template = "%-20s %10s %9s%n";
+        System.out.printf(titleTemplate,"|url" , "|page views" , "|visitors|");
 
 
         for (Map.Entry<String, List<String>> set :
                 trackingResultsPageViews.entrySet()) {
-            System.out.println(set.getKey() + "\t" + "" + "\t" + set.getValue().size());
+            int visitors = set.getValue().size();
+            int pageView = (visitors == 1) ? 1 : visitors + 1;
+            System.out.printf(template,set.getKey() ,pageView , visitors);
 
         }
 
