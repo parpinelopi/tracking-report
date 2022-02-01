@@ -5,9 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
-
 
 
 public class Main {
@@ -53,7 +51,6 @@ public class Main {
             try {
                 DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
                 dateTimeEnd = LocalDateTime.parse(endDtTm, dateTimeFormat);
-
                 if (dateTimeEnd.isBefore(dateTimeStart)) {
 
                     System.out.println("End date cannot be before start date, please enter a valid end date");
@@ -77,6 +74,7 @@ public class Main {
         br.readLine();
         Map<String, List<String>> trackingResultsPageViews = new HashMap<>();
 
+
         while ((string = br.readLine()) != null) {
 
             String[] stringParts = string.split("\\|");
@@ -85,13 +83,11 @@ public class Main {
             String userIDPart = stringParts[3].replace("|", "").trim();
 
 
-            List<String> trackingResultsVisitors = new ArrayList<>();
-
             try {
                 DateTimeFormatter dateTimeFormatParsed = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
                 dateTimeParsed = LocalDateTime.parse(dateTimePart, dateTimeFormatParsed);
 
-                if (dateTimeStart.truncatedTo(ChronoUnit.MINUTES).isBefore(dateTimeParsed) && dateTimeEnd.truncatedTo(ChronoUnit.MINUTES).isAfter(dateTimeParsed)) {
+                if ((dateTimeStart.isBefore(dateTimeParsed) || dateTimeStart.isEqual(dateTimeParsed)) && (dateTimeEnd.isAfter(dateTimeParsed) || dateTimeEnd.isEqual(dateTimeParsed))) {
 
                     List<String> checkListWithUrl;
                     checkListWithUrl = trackingResultsPageViews.get(urlPart);
@@ -101,15 +97,12 @@ public class Main {
                         singleVisitor.add(userIDPart);
                         trackingResultsPageViews.put(urlPart, singleVisitor);
 
-
                     } else {
                         List<String> addUserToRelatedUrl = new ArrayList<>();
                         addUserToRelatedUrl.addAll(checkListWithUrl);
                         addUserToRelatedUrl.add(userIDPart);
                         trackingResultsPageViews.put(urlPart, addUserToRelatedUrl);
-
                     }
-
                 }
 
             } catch (DateTimeParseException e) {
@@ -117,18 +110,17 @@ public class Main {
             }
         }
 
-        System.out.println("pageviews: " + trackingResultsPageViews);
-
         String titleTemplate = "%-20s %10s %9s%n";
         String template = "%-20s %10s %9s%n";
-        System.out.printf(titleTemplate,"|url" , "|page views" , "|visitors|");
+        System.out.printf(titleTemplate, "|url", "|page views", "|visitors|");
 
-
-        for (Map.Entry<String, List<String>> set :
+        for (Map.Entry<String, List<String>> entry :
                 trackingResultsPageViews.entrySet()) {
-            int visitors = set.getValue().size();
-            int pageView = (visitors == 1) ? 1 : visitors + 1;
-            System.out.printf(template,set.getKey() ,pageView , visitors);
+            int pageViews = entry.getValue().size();
+            Set<String> set = new HashSet<>();
+            for (String userID : entry.getValue())
+                set.add(userID);
+            System.out.printf(template, entry.getKey(), pageViews, set.size());
 
         }
 
