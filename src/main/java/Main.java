@@ -10,9 +10,7 @@ import java.util.*;
 
 public class Main {
 
-    public Main() {
-    }
-
+    static boolean retry;
 
     public static void main(String[] args) throws Exception {
 
@@ -21,54 +19,30 @@ public class Main {
 
 
         String startDtTm;
-        LocalDateTime dateTimeStart = LocalDateTime.now();
-        LocalDateTime dateTimeEnd = LocalDateTime.now();
+        String endDtTm;
+        LocalDateTime dateTimeStart;
+        LocalDateTime dateTimeEnd;
         LocalDateTime.now();
-        LocalDateTime dateTimeParsed;
-        boolean retry;
+        LocalDateTime dateTimeParsed = LocalDateTime.now();
+
         do {
             System.out.println("input the start date and time in the following format yyyy-MM-dd HH:mm:ss");
             startDtTm = rangeInput.nextLine();
 
-            try {
-                DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
-                dateTimeStart = LocalDateTime.parse(startDtTm, dateTimeFormat);
+            dateTimeStart = parseDateTimeByUser(startDtTm);
 
-                retry = false;
-            } catch (DateTimeParseException e) {
-                e.printStackTrace();
-                retry = true;
-                System.out.println("please enter a valid input");
-            }
         } while (retry);
 
-        String endDtTm;
 
         do {
             System.out.println("input the end date and time in the following format yyyy-MM-dd HH:mm:ss");
             endDtTm = rangeInput.nextLine();
-
-            try {
-                DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
-                dateTimeEnd = LocalDateTime.parse(endDtTm, dateTimeFormat);
-                if (dateTimeEnd.isBefore(dateTimeStart)) {
-
-                    System.out.println("End date cannot be before start date, please enter a valid end date");
-                    retry = true;
-
-                } else retry = false;
-            } catch (DateTimeParseException e) {
-                e.printStackTrace();
-                retry = true;
-                System.out.println("please enter a valid input");
-            }
+            dateTimeEnd = parseDateTimeByUser(endDtTm);
         } while (retry);
 
 
         File log = new File("./src/main/resources/log.txt");
-
         BufferedReader br = new BufferedReader(new FileReader(log));
-
 
         String string;
         br.readLine();
@@ -82,41 +56,70 @@ public class Main {
             String urlPart = stringParts[2].replace("|", "").trim();
             String userIDPart = stringParts[3].replace("|", "").trim();
 
+            createResults(dateTimePart, userIDPart, urlPart, dateTimeStart, dateTimeEnd, dateTimeParsed, trackingResultsPageViews);
 
-            try {
-                DateTimeFormatter dateTimeFormatParsed = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
-                dateTimeParsed = LocalDateTime.parse(dateTimePart, dateTimeFormatParsed);
-
-                if ((dateTimeStart.isBefore(dateTimeParsed) || dateTimeStart.isEqual(dateTimeParsed)) && (dateTimeEnd.isAfter(dateTimeParsed) || dateTimeEnd.isEqual(dateTimeParsed))) {
-
-                    List<String> checkListWithUrl;
-                    checkListWithUrl = trackingResultsPageViews.get(urlPart);
-
-                    if (checkListWithUrl == null) {
-                        List<String> singleVisitor = new ArrayList<>();
-                        singleVisitor.add(userIDPart);
-                        trackingResultsPageViews.put(urlPart, singleVisitor);
-
-                    } else {
-                        List<String> addUserToRelatedUrl = new ArrayList<>();
-                        addUserToRelatedUrl.addAll(checkListWithUrl);
-                        addUserToRelatedUrl.add(userIDPart);
-                        trackingResultsPageViews.put(urlPart, addUserToRelatedUrl);
-                    }
-                }
-
-            } catch (DateTimeParseException e) {
-                e.printStackTrace();
-            }
         }
+
+        printResults(trackingResultsPageViews);
+
+    }
+
+    static LocalDateTime parseDateTimeByUser(String dateTimeInput) {
+        LocalDateTime dateTimeFormatted = LocalDateTime.now();
+
+        try {
+            DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
+            dateTimeFormatted = LocalDateTime.parse(dateTimeInput, dateTimeFormat);
+
+            retry = false;
+        } catch (DateTimeParseException e) {
+            e.printStackTrace();
+            retry = true;
+            System.out.println("please enter a valid input");
+        }
+
+        return dateTimeFormatted;
+    }
+
+    static LocalDateTime createResults(String dateTimeString, String userString, String urlString, LocalDateTime startDateTime, LocalDateTime endDateTime, LocalDateTime parsedDateTime, Map<String, List<String>> trackPageViews) {
+
+        try {
+            DateTimeFormatter dateTimeFormatParsed = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.LENIENT);
+            parsedDateTime = LocalDateTime.parse(dateTimeString, dateTimeFormatParsed);
+
+            if ((startDateTime.isBefore(parsedDateTime) || startDateTime.isEqual(parsedDateTime)) && (endDateTime.isAfter(parsedDateTime) || endDateTime.isEqual(parsedDateTime))) {
+
+                List<String> checkListWithUrl;
+                checkListWithUrl = trackPageViews.get(urlString);
+
+                if (checkListWithUrl == null) {
+                    List<String> singleVisitor = new ArrayList<>();
+                    singleVisitor.add(userString);
+                    trackPageViews.put(urlString, singleVisitor);
+
+                } else {
+                    List<String> addUserToRelatedUrl = new ArrayList<>();
+                    addUserToRelatedUrl.addAll(checkListWithUrl);
+                    addUserToRelatedUrl.add(userString);
+                    trackPageViews.put(urlString, addUserToRelatedUrl);
+                }
+            }
+
+        } catch (DateTimeParseException e) {
+            e.printStackTrace();
+        }
+
+        return parsedDateTime;
+    }
+
+    static Map printResults(Map<String, List<String>> trackPageViewMap) {
 
         String titleTemplate = "%-20s %10s %9s%n";
         String template = "%-20s %10s %9s%n";
         System.out.printf(titleTemplate, "|url", "|page views", "|visitors|");
 
-
         for (Map.Entry<String, List<String>> entry :
-                trackingResultsPageViews.entrySet()) {
+                trackPageViewMap.entrySet()) {
             int pageViews = entry.getValue().size();
             Set<String> set = new HashSet<>();
             for (String userID : entry.getValue())
@@ -124,7 +127,6 @@ public class Main {
             System.out.printf(template, entry.getKey(), pageViews, set.size());
 
         }
-
+        return trackPageViewMap;
     }
-
 }
